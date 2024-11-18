@@ -1,5 +1,6 @@
+import os
 import enchant
-
+from pathlib import Path
 
 class CaesarsCipher:
     def __init__(self):
@@ -42,13 +43,26 @@ class CaesarsCipher:
 
 if __name__ == '__main__':
 
+    directory_user = Path(input('Введите путь к папке для записи файла: '))
+    if not directory_user.exists():
+        print(f'Папка {str(directory_user)} не существует')
+        exit()
+    folder_path = str(directory_user)
+    os.chdir(folder_path)
+
+    # Контент для записи в файл, если программа не выявит расшифровок.
+    content = ['пусто']
+
     cipher = CaesarsCipher()
     d = enchant.Dict('en_US')
-    text_enc = 'o3zR v..D0?yRA0R8FR8v47w0ER4.R1WdC!sLF5D'
+    text_enc = input('Что нужно расшифровать: ')
 
     # Список вариантов расшифрованного текста с пробелами,
     # которые прошли отбор по условиям ниже.
     list_passwords_with_space = []
+
+    # И список всех паролей, если ни одного подходящего не найдено.
+    list_all_passwords = []
 
     for cipher.key in range(66):
         text_dec = cipher.decrypt(text_enc)
@@ -103,15 +117,20 @@ if __name__ == '__main__':
                 # ведь в комментариях к паролю может быть допущена
                 # грамматическая ошибка.
                 # Выведем и такие в качестве варианта.
-                list_passwords_with_space.append(text_dec)
+                list_passwords_with_space.append(f'Ключ: {cipher.key},'
+                                                 f'Расшифровка: {text_dec}.'
+                                                 f' Возможные пароли:'
+                                                 f'{', '
+                                                 .join(list_wrong_word)}')
 
                 print(f'Ключ: {cipher.key}, расшифровка: {text_dec}. '
                       f'Возможно ваш пароль {list_wrong_word}')
 
             elif len(list_correct_word) > 0 and len(list_wrong_word) == 0:
                 list_passwords_with_space.append(text_dec)
-
                 print(f'Ключ: {cipher.key}, расшифровка: {text_dec}.')
+
+            content = list_passwords_with_space
 
     # Если отсутствуют допустимые расшифровки с пробелами, не будет
     # выведено никаких сообщений, поэтому создадим на этот случай еще
@@ -119,4 +138,14 @@ if __name__ == '__main__':
     if len(list_passwords_with_space) == 0:
         for cipher.key in range(66):
             text_dec = cipher.decrypt(text_enc)
+            list_all_passwords.append(text_dec)
+            content = list_all_passwords
+
+            # Вывод в консоль всех паролей.
             print(f'Ключ: {cipher.key}, расшифровка: {text_dec}.')
+
+    with open('password.txt', 'w', encoding='utf-8') as file:
+        file.writelines(content)
+
+
+
